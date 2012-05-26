@@ -1,0 +1,12 @@
+-- must return true
+select 'foo' = json_array_get_text('["foo", true, 42, 42.424242]', 0)
+	and true = json_array_get_boolean('["foo", true, 42, 42.424242]', 1)
+	and 42 = json_array_get_int('["foo", true, 42, 42.424242]', 2)
+	and 42 = json_array_get_bigint('["foo", true, 42, 42.424242]', 2)
+	and 42.424242 = json_array_get_double('["foo", true, 42, 42.424242]', 3)
+	and true = json_array_get_boolean('["foo", true, 42, 42.424242]', 1)
+	and 'qq' = json_object_get_text('{"foo":"qq", "bar": true, "baz": 42, "boo": 42.424242}', 'foo')
+	and true = json_object_get_boolean('{"foo":"qq", "bar": true, "baz": 42, "boo": 42.424242}', 'bar')
+	and 42 = json_object_get_int('{"foo":"qq", "bar": true, "baz": 42, "boo": 42.424242}', 'baz')
+	and 42 = json_object_get_bigint('{"foo":"qq", "bar": true, "baz": 42, "boo": 42.424242}', 'baz')
+	and 42.424242 = json_object_get_double('{"foo":"qq", "bar": true, "baz": 42, "boo": 42.424242}', 'boo')
