@@ -104,7 +104,7 @@ And plan now looks like:
 Building and installing
 -----------------------
 
-[plpgsql functions](todo) may be created by non-admin user.
+[plpgsql functions](https://github.com/alx3apps/postgre-json-functions/blob/master/src/main/plpgsql/postgre_json.sql) may be created by non-admin user.
 
 pljava functions depends on gson 2.2.1 (available in maven central) and [https://github.com/alx3apps/jgit-buildnumber](jgit-buildnumber) for building.
 
@@ -113,7 +113,7 @@ Build maven project:
     mvn clean install
 
 Install pljava [on linux](http://wiki.tada.se/index.php?title=Installing_on_Linux_%28or_other_*nix%29) or [on windows](http://wiki.tada.se/index.php?title=Windows_Installation).
-Some pljava docs is also available [here](http://cvs.pgfoundry.org/cgi-bin/cvsweb.cgi/pljava/org.postgresql.pljava/docs/userguide.html?rev=1.15)
+Some pljava docs are also available [here](http://cvs.pgfoundry.org/cgi-bin/cvsweb.cgi/pljava/org.postgresql.pljava/docs/userguide.html?rev=1.15).
 
 Run this as superuser in particular database:
 
@@ -121,7 +121,7 @@ Run this as superuser in particular database:
     select sqlj.install_jar('file://<some_path>/postgre-json-functions-1.0.jar', 'postgre_json_functions_10', false)
     select sqlj.set_classpath('public', 'gson_221:postgre_json_functions_10');
 
-Create functions [from here](todo) as normal user (you need to reconnect on classpath update), e.g.:
+Create functions [from here](https://github.com/alx3apps/postgre-json-functions/blob/master/src/main/java/ru/concerteza/postgrejson/java_json.sql#L9) as normal user (you need to reconnect on classpath update), e.g.:
 
     create or replace function json_object_get_text(text, text) returns text as $$
         ru.concerteza.postgrejson.JsonUtils.jsonMapGetString(java.lang.String, java.lang.String)
@@ -131,5 +131,3 @@ License information
 -------------------
 
 You can use any code from this project under the terms of [Apache License 2.0.](http://www.apache.org/licenses/LICENSE-2.0).
-pljava is available under [BSD license](http://wiki.tada.se/index.php?title=PLJava_License).
-google-gson is available under [Apache License 2.0.](http://www.apache.org/licenses/LICENSE-2.0).
