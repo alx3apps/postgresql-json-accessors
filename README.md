@@ -88,7 +88,7 @@ Create JSON index:
 
     create index test_table_val_foo_idx on test_table(json_object_get_text(val, 'foo'));
 
-Repeat query, not it's fast:
+Repeat query, now it's fast:
 
     select * from test_table where json_object_get_text(val, 'foo') = 'qq3'
 
