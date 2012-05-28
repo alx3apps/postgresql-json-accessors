@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.concerteza.util</groupId>
     <artifactId>postgre-json-functions</artifactId>
-    <version>1.0</version>
+    <version>1.1</version>
     <packaging>jar</packaging>
     <name>JSON SQLJ functions for PostgreSQL</name>
 

@@ -7,42 +7,50 @@ select sqlj.install_jar('file://<some_path>/postgre-json-functions-1.0.jar', 'po
 select sqlj.set_classpath('public', 'gson_221:postgre_json_functions_10');
 
 -- as normal user
-create or replace function json_array_get_text(text, int) returns text as $$
-    ru.concerteza.postgrejson.JsonUtils.jsonArrayGetString(java.lang.String, int)
-$$ language java immutable;
-
-create or replace function json_array_get_boolean(text, int) returns boolean as $$
-    ru.concerteza.postgrejson.JsonUtils.jsonArrayGetBoolean(java.lang.String, int)
-$$ language java immutable;
-
-create or replace function json_array_get_int(text, int) returns int as $$
-    ru.concerteza.postgrejson.JsonUtils.jsonArrayGetInteger(java.lang.String, int)
-$$ language java immutable;
-
-create or replace function json_array_get_bigint(text, int) returns bigint as $$
-    ru.concerteza.postgrejson.JsonUtils.jsonArrayGetLong(java.lang.String, int)
-$$ language java immutable;
-
-create or replace function json_array_get_double(text, int) returns double precision as $$
-    ru.concerteza.postgrejson.JsonUtils.jsonArrayGetDouble(java.lang.String, int)
-$$ language java immutable;
-
 create or replace function json_object_get_text(text, text) returns text as $$
     ru.concerteza.postgrejson.JsonUtils.jsonMapGetString(java.lang.String, java.lang.String)
-$$ language java immutable;
+$$ language java immutable returns null on null input;
 
 create or replace function json_object_get_boolean(text, text) returns boolean as $$
     ru.concerteza.postgrejson.JsonUtils.jsonMapGetBoolean(java.lang.String, java.lang.String)
-$$ language java immutable;
+$$ language java immutable returns null on null input;
 
 create or replace function json_object_get_int(text, text) returns int as $$
     ru.concerteza.postgrejson.JsonUtils.jsonMapGetInteger(java.lang.String, java.lang.String)
-$$ language java immutable;
+$$ language java immutable returns null on null input;
 
 create or replace function json_object_get_bigint(text, text) returns bigint as $$
     ru.concerteza.postgrejson.JsonUtils.jsonMapGetLong(java.lang.String, java.lang.String)
-$$ language java immutable;
+$$ language java immutable returns null on null input;
 
-create or replace function json_object_get_double(text, text) returns double precision as $$
-    ru.concerteza.postgrejson.JsonUtils.jsonMapGetDouble(java.lang.String, java.lang.String)
-$$ language java immutable;
+create or replace function json_object_get_numeric(text, text) returns numeric as $$
+    ru.concerteza.postgrejson.JsonUtils.jsonMapGetBigDecimal(java.lang.String, java.lang.String)
+$$ language java immutable returns null on null input;
+
+create or replace function json_object_get_timestamp(text, text) returns timestamp as $$
+    ru.concerteza.postgrejson.JsonUtils.jsonMapGetTimestamp(java.lang.String, java.lang.String)
+$$ language java immutable returns null on null input;
+
+create or replace function json_array_to_text_array(text) returns text[] as $$
+    ru.concerteza.postgrejson.JsonUtils.jsonArrayToStringArray(java.lang.String)
+$$ language java immutable returns null on null input;
+
+create or replace function json_array_to_boolean_array(text) returns boolean[] as $$
+    ru.concerteza.postgrejson.JsonUtils.jsonArrayToBooleanArray(java.lang.String)
+$$ language java immutable returns null on null input;
+
+create or replace function json_array_to_int_array(text) returns int[] as $$
+    ru.concerteza.postgrejson.JsonUtils.jsonArrayToIntegerArray(java.lang.String)
+$$ language java immutable returns null on null input;
+
+create or replace function json_array_to_bigint_array(text) returns bigint[] as $$
+    ru.concerteza.postgrejson.JsonUtils.jsonArrayToLongArray(java.lang.String)
+$$ language java immutable returns null on null input;
+
+create or replace function json_array_to_numeric_array(text) returns numeric[] as $$
+    ru.concerteza.postgrejson.JsonUtils.jsonArrayToBigDecimalArray(java.lang.String)
+$$ language java immutable returns null on null input;
+
+create or replace function json_array_to_timestamp_array(text) returns timestamp without time zone[] as $$
+    ru.concerteza.postgrejson.JsonUtils.jsonArrayToTimestampArray(java.lang.String)
+$$ language java immutable returns null on null input;

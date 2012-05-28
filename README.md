@@ -1,62 +1,63 @@
 JSON functions for PostgreSQL
 =============================
 
-[PostgreSQL](http://www.postgresql.org/) stored functions for accessing [JSON](http://www.json.org/) object and array fields. May be used for indexing JSON data.
+[PostgreSQL](http://www.postgresql.org/) stored functions for accessing [JSON](http://www.json.org/) fields.
 
-Written in two variants (with same interfaces):
+If you have text (varchar) columns with data like this:
 
- - [PL/pgSQL](http://www.postgresql.org/docs/9.0/static/plpgsql.html) functions, written using simple regular expressions, are able to parse only simple one level JSON arrays and objects, __NOT__ support full JSON specification
- - [PL/Java](http://pgfoundry.org/projects/pljava/) functions, written on top of [google-gson](http://code.google.com/p/google-gson/) JSON parser
+    {"create_date":"2009-12-01 01:23:45","tags":["foo","bar","baz"]}
 
-Third native C implementation on top of [cJSON](http://sourceforge.net/projects/cjson/) library is planning.
+these functions can be used for:
+
+ - creating B-tree (default) indexes on JSON object fields (`create_date` field)
+ - creating [GIN](http://www.postgresql.org/docs/9.0/static/gin.html) indexes on JSON arrays (`tags` field)
+
+Functions are written using [PL/Java](http://pgfoundry.org/projects/pljava/), on top of [google-gson](http://code.google.com/p/google-gson/)
+JSON parser. Native C implementation on top of [cJSON](http://sourceforge.net/projects/cjson/) library is in our plans.
 
 Indexing JSON in Postgre
 ------------------------
 
-Sometimes JSON is very convenient for storing structured data in single text field. But it's not easy task to provide fast (indexed) search on separate JSON fields.
+Sometimes JSON is very convenient for storing structured data in single text field. But it's not easy to provide fast (indexed) search on separate JSON fields.
 PostgreSQL have had no JSON support until version 9.2, which [introduced some support](http://www.postgresql.org/docs/9.2/static/functions-json.html).
 These 9.2 functions won't help with indexing JSON data.
 
-To create JSON index we need function, that can return JSON object field value on input JSON string and field name.
+To create JSON index we need stored functions to parse JSON text fields.
 Such function may be written using [plv8js](http://code.google.com/p/plv8js/wiki/PLV8) module, [this article](http://people.planetpostgresql.org/andrew/index.php?/archives/249-Using-PLV8-to-index-JSON.html)
 has an example of plv8 usage.
 
-This project tries to provided stored functions for indexing JSON without using plv8.
+This project provides stored functions for indexing JSON without using plv8.
 
 Functions
 ---------
 
-Main function, that gets JSON string and field name for input and returns field value as text:
+__Function for accessing JSON object fields:__
 
     function json_object_get_text(text, text) returns text
 
-Additional functions for other data types:
+Usage example, returns `qq`:
 
-    function json_object_get_boolean(text, text) returns boolean
-    function json_object_get_int(text, text) returns int
-    function json_object_get_bigint(text, text) returns bigint
-    function json_object_get_double(text, text) returns double precision
+    select json_object_get_text('{"foo":"qq", "bar": true}', 'foo')
 
-Similar functions for JSON arrays (indexes starts from 0):
+There are also similar functions returning `boolean`, `int`, `bigint`, `numeric` and `timestamp without timezone`.
+Timestamp format `yyyy-MM-dd HH:mm:ss` is fixed, due to `Timestamp.valueOf(...)` usage for parsing dates.
 
-    function json_array_get_text(text, int) returns text
-    function json_array_get_boolean(text, int) returns boolean
-    function json_array_get_int(text, int) returns int
-    function json_array_get_bigint(text, int) returns bigint
-    function json_array_get_double(text, int) returns double precision
+__Function for converting JSON arrays into postgre arrays:__
 
-Simple usage example, returns 42:
+    function json_array_to_text_array(text) returns text[]
 
-    select json_array_get_int('["foo", true, 42]', 2)
+Usage example, returns `array['foo', 'bar']`:
 
-Complex JSON example, not supported by plpgsql functions, returns "ee":
+    select json_array_to_text_array('["foo", "bar"]')
 
-    select json_array_get_text(json_object_get_text('{"foo" : "qq", "bar" : ["ww", "ee", "rr"]}', 'bar'), 1)
+There are also similar functions returning `boolean[]`, `int[]`, `bigint[]`, `numeric[]` and `timestamp without timezone[]`.
+All primitive arrays returns from Java functions in boxed form (`Boolean[]` etc.) to allow returning `NULL` elements.
+Having nulls in such arrays is not a good idea, but "Cannot assign null to int" errors in stored functions are worse.
 
-JSON index example
-------------------
+JSON index examples
+-------------------
 
-This example was tested on Postgre 9.0 with both pljava and plpgsql functions (JSON is deliberately simple).
+This example was tested on Postgre 9.0, full example is [here](https://github.com/alx3apps/postgre-json-functions/blob/master/src/test/sql/test_json_index.sql)
 
 Create table:
 
@@ -64,35 +65,32 @@ Create table:
 
 Insert data (1572867 rows):
 
-    insert into test_table(val) values('{"foo":"qq", "bar": true, "baz": 42, "boo": 42.424242}');
-    insert into test_table(val) values('{"foo":"qq1", "bar": false, "baz": 43, "boo": 43.434343}');
-    insert into test_table(val) values('{"foo":"qq2", "bar": true, "baz": 44, "boo": 44.444444}');
+    insert into test_table(val) values('{"create_date":"2009-12-01 01:23:45","tags":["foo1","bar1","baz1"]}');
+    insert into test_table(val) values('{"create_date":"2009-12-02 01:23:45","tags":["foo2","bar2","baz2"]}');
+    insert into test_table(val) values('{"create_date":"2009-12-03 01:23:45","tags":["foo3","bar3","baz3"]}');
     insert into test_table(val) select val from test_table;
     -- repeat previous row 18 times more
     ....
-    insert into test_table(val) values('{"foo":"qq3", "bar": false, "baz": 45, "boo": 45.454545}');
-    insert into test_table(val) values('{"foo":"qq3", "bar": false, "baz": 45, "boo": 45.454545}');
-    insert into test_table(val) values('{"foo":"qq3", "bar": false, "baz": 45, "boo": 45.454545}');
+    insert into test_table(val) values('{"create_date":"2009-12-04 01:23:45","tags":["foo4","bar4","baz4"]}');
+    insert into test_table(val) values('{"create_date":"2009-12-04 01:23:45","tags":["foo4","bar4","baz4"]}');
+    insert into test_table(val) values('{"create_date":"2009-12-04 01:23:45","tags":["foo4","bar4","baz4"]}');
 
-Try to query three rows, that have "qq3" value in "foo" field (query is slow):
+Try to query three rows, inserted last, using `create_date` JSON field (query is slow):
 
-    select * from test_table where json_object_get_text(val, 'foo') = 'qq3'
+    select * from test_table where json_object_get_timestamp(val, 'create_date')
+        between '2009-12-04 01:00:00' and '2009-12-04 02:00:00';
 
 It's plan looks like:
 
-    Seq Scan on test_table  (cost=0.00..431167.59 rows=7864 width=63) (actual time=19567.847..19567.882 rows=3 loops=1)
-      Filter: (json_object_get_text(val, 'foo'::text) = 'qq3'::text)
-    Total runtime: 19568.007 ms
+    Seq Scan on test_table  (cost=0.00..830998.51 rows=7864 width=76) (actual time=21904.068..21904.124 rows=3 loops=1)
+      Filter: ((json_object_get_timestamp(val, 'create_date'::text) >= '2009-12-04 01:00:00'::timestamp without time zone) AND (json_object_get_timestamp(val, 'create_date'::text) <= '2009-12-04 02:00:00'::timestamp without time zone))
+    Total runtime: 21904.157 ms
 
-Create JSON index:
+Create B-tree index on `create_date` JSON field:
 
-    create index test_table_val_foo_idx on test_table(json_object_get_text(val, 'foo'));
+    create index test_date_idx on test_table using btree (json_object_get_timestamp(val, 'create_date'));
 
-Repeat query, now it's fast:
-
-    select * from test_table where json_object_get_text(val, 'foo') = 'qq3'
-
-And plan now looks like:
+Repeat query, now it's fast and plan looks like:
 
     Bitmap Heap Scan on test_table  (cost=149.62..16553.50 rows=7864 width=63) (actual time=0.025..0.028 rows=3 loops=1)
       Recheck Cond: (json_object_get_text(val, 'foo'::text) = 'qq3'::text)
@@ -100,13 +98,32 @@ And plan now looks like:
             Index Cond: (json_object_get_text(val, 'foo'::text) = 'qq3'::text)
     Total runtime: 0.054 ms
 
+Try to query three rows, inserted last, checking inclusion into `tags` JSON field (query is slow):
+
+    select * from test_table where json_array_to_text_array(json_object_get_text(val, 'tags')) @> array['bar4'];
+
+It's plan looks like:
+
+    Seq Scan on test_table  (cost=0.00..827066.34 rows=1573 width=76) (actual time=41336.691..41336.749 rows=3 loops=1)
+      Filter: (json_array_to_text_array(json_object_get_text(val, 'tags'::text)) @> '{bar4}'::text[])
+    Total runtime: 41336.799 ms
+
+Create GIN index on `tags` JSON field:
+
+    create index test_tags_idx on test_table using gin (json_array_to_text_array(json_object_get_text(val, 'tags')));
+
+Repeat query, now it's fast and plan looks like:
+
+    Bitmap Heap Scan on test_table  (cost=29.08..5679.25 rows=1573 width=76) (actual time=0.050..0.055 rows=3 loops=1)
+      Recheck Cond: (json_array_to_text_array(json_object_get_text(val, 'tags'::text)) @> '{bar4}'::text[])
+      ->  Bitmap Index Scan on test_tags_idx  (cost=0.00..28.69 rows=1573 width=0) (actual time=0.037..0.037 rows=3 loops=1)
+            Index Cond: (json_array_to_text_array(json_object_get_text(val, 'tags'::text)) @> '{bar4}'::text[])
+    Total runtime: 0.129 ms
 
 Building and installing
 -----------------------
 
-[plpgsql functions](https://github.com/alx3apps/postgre-json-functions/blob/master/src/main/plpgsql/postgre_json.sql) may be created by non-admin user.
-
-pljava functions depends on gson 2.2.1 (available in maven central) and [https://github.com/alx3apps/jgit-buildnumber](jgit-buildnumber) for building.
+Project depends on gson 2.2.1 (available in maven central) and [jgit-buildnumber](https://github.com/alx3apps/jgit-buildnumber) for building.
 
 Build maven project:
 
@@ -117,17 +134,18 @@ Some pljava docs are also available [here](http://cvs.pgfoundry.org/cgi-bin/cvsw
 
 Run this as superuser in particular database:
 
-    select sqlj.install_jar('file://<some_path>/gson-2.2.1.jar', 'gson_221', false)
-    select sqlj.install_jar('file://<some_path>/postgre-json-functions-1.0.jar', 'postgre_json_functions_10', false)
-    select sqlj.set_classpath('public', 'gson_221:postgre_json_functions_10');
+    select sqlj.install_jar('file://<some_path>/gson-2.2.1.jar', 'gson_221', false);
+    select sqlj.install_jar('file://<some_path>/postgre-json-functions-1.1.jar', 'postgre_json_functions_11', false);
+    select sqlj.set_classpath('public', 'gson_221:postgre_json_functions_11');
 
-Create functions [from here](https://github.com/alx3apps/postgre-json-functions/blob/master/src/main/java/ru/concerteza/postgrejson/java_json.sql#L9) as normal user (you need to reconnect on classpath update), e.g.:
+Create functions [from here](https://github.com/alx3apps/postgre-json-functions/blob/master/src/main/java/ru/concerteza/postgrejson/java_json.sql#L9)
+as normal user (you need to reconnect on classpath update), e.g.:
 
     create or replace function json_object_get_text(text, text) returns text as $$
         ru.concerteza.postgrejson.JsonUtils.jsonMapGetString(java.lang.String, java.lang.String)
-    $$ language java immutable;
+    $$ language java immutable returns null on null input;
 
 License information
 -------------------
 
-You can use any code from this project under the terms of [Apache License 2.0.](http://www.apache.org/licenses/LICENSE-2.0).
+You can use any code from this project under the terms of [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
