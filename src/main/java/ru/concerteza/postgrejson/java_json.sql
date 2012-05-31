@@ -2,9 +2,9 @@
 -- as superuser
 select sqlj.install_jar('file://<some_path>/gson-2.2.1.jar', 'gson_221', false)
 -- select sqlj.remove_jar('gson_221', false)
-select sqlj.install_jar('file://<some_path>/postgre-json-functions-1.0.jar', 'postgre_json_functions_10', false)
--- select sqlj.remove_jar('postgre_json_functions_10', false)
-select sqlj.set_classpath('public', 'gson_221:postgre_json_functions_10');
+select sqlj.install_jar('file://<some_path>/postgre-json-functions-1.1.jar', 'postgre_json_functions_11', false)
+-- select sqlj.remove_jar('postgre_json_functions_11', false)
+select sqlj.set_classpath('public', 'gson_221:postgre_json_functions_11');
 
 -- as normal user
 create or replace function json_object_get_text(text, text) returns text as $$
