@@ -1,0 +1,6 @@
+# json_accessors_java extension
+comment = 'JSON SQLJ accessor functions'
+default_version = '1.2'
+superuser = false
+# classpath is set for one schema
+relocatable = false

@@ -1,7 +1,6 @@
 /.idea
 /target
-/postgre-json-functions.iml
-src/main/c/cJSON.o
-src/main/c/postgre-json-functions.o
-src/main/c/postgre-json-functions.so
-src/main/c/results
+/*.iml
+/src/main/c/*.o
+/src/main/c/*.so
+/src/main/c/results
